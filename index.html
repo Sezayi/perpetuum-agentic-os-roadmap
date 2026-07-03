@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perpetuum — Agentic OS Technical Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#20124D; --bg2:#181235; --panel:#2A1A63; --panel2:#33207A;
+    --lav:#AD83FA; --glow:#BD74FF; --gold:#FFBA00; --white:#FFFFFF; --muted:#C9C2E8;
+    --line:rgba(173,131,250,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter Tight',system-ui,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,#3a1f8a55,transparent),var(--bg);
+    color:var(--white);line-height:1.55;min-height:100vh;padding:32px 20px 80px;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  h1,h2,h3,.brand{font-family:'Poppins',sans-serif}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:8px}
+  .brand{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--lav);font-weight:700}
+  h1{font-size:clamp(28px,4vw,44px);line-height:1.1;margin:10px 0 6px;background:linear-gradient(90deg,#fff,var(--lav));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);max-width:640px;font-size:16px}
+  /* toggle */
+  .toggle{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:4px;margin:28px 0 22px}
+  .toggle button{font-family:'Poppins';font-weight:600;font-size:13px;color:var(--muted);background:none;border:none;padding:9px 18px;border-radius:999px;cursor:pointer;transition:.2s}
+  .toggle button.active{background:linear-gradient(90deg,var(--lav),var(--glow));color:#1a0e3d}
+  .view{display:none;animation:fade .4s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* layer stack */
+  .stack{display:flex;flex-direction:column-reverse;gap:8px;margin-bottom:14px}
+  .layer{position:relative;display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;cursor:pointer;
+    background:linear-gradient(90deg,var(--panel),var(--panel2));border:1px solid var(--line);transition:.22s;overflow:hidden}
+  .layer:hover{transform:translateX(6px);border-color:var(--glow)}
+  .layer .num{font-family:'Poppins';font-weight:700;font-size:22px;color:var(--lav);min-width:34px}
+  .layer .lt{font-family:'Poppins';font-weight:600;font-size:17px}
+  .layer .ld{color:var(--muted);font-size:13px;margin-top:2px}
+  .layer[data-top="1"]{background:linear-gradient(90deg,#4a2e00,#7a5000);border-color:var(--gold)}
+  .layer[data-top="1"] .num,.layer[data-top="1"] .lt{color:var(--gold)}
+  .layer .plus{margin-left:auto;color:var(--lav);font-size:22px;transition:.2s}
+  .layer.open .plus{transform:rotate(45deg)}
+  .detail{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(--bg2);border-radius:12px;border:1px solid var(--line);border-top:none}
+  .detail.open{max-height:340px;margin:-4px 0 6px}
+  .detail .in{padding:16px 22px}
+  .detail .in p{color:var(--muted);font-size:14px;margin-bottom:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12.5px;font-family:'Poppins';font-weight:600;padding:6px 12px;border-radius:999px;background:#2f1d70;border:1px solid var(--line);color:#e7defc}
+  .hint{color:var(--muted);font-size:13px;text-align:center;margin-bottom:24px;opacity:.8}
+  /* roadmap */
+  .rail{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:22px}
+  .step{flex:1;min-width:120px;text-align:center;padding:14px 10px;border-radius:12px;cursor:pointer;background:var(--panel);border:1px solid var(--line);transition:.2s;position:relative}
+  .step:hover{border-color:var(--glow)}
+  .step.active{background:linear-gradient(180deg,var(--lav),var(--glow));color:#1a0e3d}
+  .step .id{font-family:'Poppins';font-weight:700;font-size:18px}
+  .step .sp{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.75;margin-top:2px}
+  .step .nm{font-size:12.5px;margin-top:6px;line-height:1.3}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:26px}
+  .card h3{font-size:22px;color:var(--lav);margin-bottom:4px}
+  .card .goal{color:var(--muted);font-size:15px;margin-bottom:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .block h4{font-family:'Poppins';font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .block ul{list-style:none}
+  .block li{font-size:14px;color:#e9e3fb;padding:5px 0 5px 18px;position:relative}
+  .block li::before{content:"›";position:absolute;left:0;color:var(--lav);font-weight:700}
+  .gate{margin-top:20px;padding:14px 16px;border-radius:12px;background:#1c2f22;border:1px solid #3ecf8e55}
+  .gate b{color:#6ef0b0;font-family:'Poppins';font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+  .gate p{color:#d6f5e6;font-size:14px;margin-top:4px}
+  .risk{margin-top:10px;padding:14px 16px;border-radius:12px;background:#331c22;border:1px solid #f0708e55}
+  .risk b{color:#ff9db3;font-family:'Poppins';font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+  .risk p{color:#f5d6de;font-size:14px;margin-top:4px}
+  /* loop */
+  .loop{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:30px 0 8px}
+  .node{font-family:'Poppins';font-weight:700;padding:18px 26px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);font-size:15px}
+  .node.pulse{animation:pulse 2.4s infinite}
+  .node:nth-child(3){animation-delay:.8s}
+  .node:nth-child(5){animation-delay:1.6s}
+  @keyframes pulse{0%,100%{border-color:var(--line);box-shadow:none}40%{border-color:var(--glow);box-shadow:0 0 24px #bd74ff66}}
+  .arrow{color:var(--lav);font-size:24px}
+  .hitl{text-align:center;color:var(--muted);font-size:13px;margin-top:6px}
+  .foot{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .rule{margin-top:26px;text-align:center;font-family:'Poppins';font-weight:600;font-size:17px;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">Perpetuum ⚡ Agentic OS</div>
+      <h1>Technical Roadmap</h1>
+      <p class="sub">From the 6-layer architecture to a running platform. Build the spine first, then thicken each layer. Click anything.</p>
+    </div>
+  </header>
+
+  <div class="toggle">
+    <button id="tArch" class="active" onclick="setView('arch')">Architecture</button>
+    <button id="tBuild" onclick="setView('build')">Build order</button>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <section id="vArch" class="view active">
+    <div class="stack" id="stack"></div>
+    <p class="hint">Six layers, bottom to top. Each sits on the one below — click a layer for its tech &amp; tools.</p>
+    <div class="loop">
+      <div class="node pulse">PLAN</div><span class="arrow">→</span>
+      <div class="node pulse">ACT</div><span class="arrow">→</span>
+      <div class="node pulse">OBSERVE</div><span class="arrow">↺</span>
+    </div>
+    <p class="hitl">The control loop — with a human-in-the-loop checkpoint before any risky action, and a hard stop so it never loops forever.</p>
+  </section>
+
+  <!-- BUILD ORDER -->
+  <section id="vBuild" class="view">
+    <div class="rail" id="rail"></div>
+    <div class="card" id="card"></div>
+    <div class="rule">The one rule: widen, don't restart. Every milestone thickens a layer the slice already proved.</div>
+  </section>
+
+  <div class="foot">
+    <span>Perpetuum — making companies AI-ready &amp; future-proof</span>
+    <span>Build the foundation once. Then every use case plugs straight in.</span>
+  </div>
+</div>
+
+<script>
+const layers=[
+ {n:1,title:'Data & Knowledge',desc:'The ground truth your agent retrieves from',
+  p:'Your agent is only as smart as what it can pull. Structure the 20% of sources that carry 80% of the answers.',
+  tech:['pgvector / Qdrant','text-embedding-3-large','nomic-embed-text (local)','LlamaIndex','unstructured.io','Cohere Rerank']},
+ {n:2,title:'Tools & Actions',desc:'How the agent touches the real world',
+  p:'Stop hardcoding. Every capability is a schema-defined tool with hard limits and a dry-run mode.',
+  tech:['MCP servers','Function calling','JSON schema','n8n bridge','Rate caps','Dry-run mode']},
+ {n:3,title:'Memory',desc:'Learns across tasks instead of starting from zero',
+  p:'Short-term for one task, long-term across tasks. Decide what NOT to keep — build inspect + wipe from day one.',
+  tech:['mem0','Redis (short-term)','Postgres (state)','Vector recall','Inspect + wipe']},
+ {n:4,title:'Reasoning',desc:'The model, and how you route work to it',
+  p:'Route by difficulty: cheap models for simple steps, strong models for the hard ones. Track cost per task.',
+  tech:['Claude Opus / Sonnet / Haiku','LiteLLM routing','OpenRouter','Instructor + Pydantic','Structured output']},
+ {n:5,title:'Orchestration',desc:'The control loop that ties it together',
+  p:'Plan → act → observe → repeat. Durable, resumable jobs with retries, HITL checkpoints and a stop condition.',
+  tech:['LangGraph','Temporal / Inngest','Retries + backoff','Human-in-the-loop','Stop condition']},
+ {n:6,title:'Governance & Observability',desc:'Build it first, or you debug in the dark',
+  p:'Trace every step, tool call and token. Guardrails and evals in CI so quality can\'t silently rot.',
+  tech:['Langfuse (self-hosted)','Guardrails AI / NeMo','Ragas + promptfoo','Cost & latency dash','Incident ownership'],top:true},
+];
+
+const phases=[
+ {id:'M0',name:'Spine & Observability',sprint:'Sprint 1',goal:'Build the nervous system before the muscles. If you can\'t see it, you can\'t debug it.',
+  build:['Monorepo (Turborepo), TS + Python, one docker-compose boots the whole stack','Langfuse self-hosted from day one — every call traced','Single gateway service; trace IDs injected here','Secrets via Doppler or SOPS — no keys in env files'],
+  stack:['Turborepo','FastAPI / Hono','Langfuse','Doppler / SOPS','Docker Compose'],
+  gate:'A "hello world" agent call shows up as a full trace in Langfuse.',
+  risk:'Skipping observability now means debugging blind for the rest of the build.'},
+ {id:'M1',name:'First Vertical Slice',sprint:'Sprint 2',goal:'One real workflow through all six layers — thin as paper, but real. Pick Tradin COA; you know the domain.',
+  build:['Hardcoded retrieval → one tool → one model call → return','No memory, no orchestration yet','Human approves every action manually','Fully traced end to end'],
+  stack:['One MCP tool','Single model call','Manual approval','Langfuse trace'],
+  gate:'The COA workflow runs end to end and produces a real result.',
+  risk:'Trying to build all layers "properly" first — you\'d stall for weeks with nothing running.'},
+ {id:'M2',name:'Data & Tools',sprint:'Sprint 3–4',goal:'Thicken the bottom two layers so the slice stops being hardcoded.',
+  build:['pgvector + ingestion via unstructured.io → chunk → embed → rerank','Freshness jobs on a schedule','Stand up MCP servers — one per capability domain','Each tool = schema + hard limits + dry-run'],
+  stack:['pgvector','unstructured.io','Cohere Rerank','MCP servers','n8n bridge'],
+  gate:'Adding a new tool means writing one MCP handler, not touching the agent.',
+  risk:'Tool sprawl without limits — an ungated action hitting production data.'},
+ {id:'M3',name:'Memory & Routing',sprint:'Sprint 5',goal:'Give the agent memory and route each step to the right-sized model.',
+  build:['mem0 long-term, Redis short-term, Postgres for structured state','Inspect + wipe endpoints from the start','LiteLLM in front of the models — route by difficulty','Instructor + Pydantic for validated output; cost per task in Langfuse'],
+  stack:['mem0','Redis','LiteLLM','Instructor + Pydantic','Cost dashboard'],
+  gate:'Switching a step\'s model is a config change; cost-per-task is visible.',
+  risk:'Memory bloat and privacy leaks if you never decided what NOT to keep.'},
+ {id:'M4',name:'Orchestration & HITL',sprint:'Sprint 6–7',goal:'This is where it becomes an OS instead of a script.',
+  build:['LangGraph for the agent graph; Temporal for durable, resumable jobs','Loop: plan → act → observe → repeat, with retries + backoff','Hard stop condition so it never loops forever','Approval checkpoints fire back into the paused workflow'],
+  stack:['LangGraph','Temporal / Inngest','BullMQ / Celery','HITL checkpoints'],
+  gate:'A workflow can pause for a day waiting on approval and resume cleanly.',
+  risk:'Non-durable orchestration — a crash loses hours of in-flight agent state.'},
+ {id:'M5',name:'Governance Hardening',sprint:'Sprint 8',goal:'Ship changes safely with a regression gate protecting you.',
+  build:['Input validation + output filtering (Guardrails AI / NeMo / Llama Guard)','Ragas for retrieval quality, promptfoo for prompt regression — in CI','Live dashboard: cost, latency, success rate','Incident ownership written down'],
+  stack:['Guardrails AI','Llama Guard','Ragas','promptfoo','OpenTelemetry'],
+  gate:'A prompt/model change that drops quality fails the build.',
+  risk:'Silent quality rot — a prompt tweak degrades answers and nobody notices.'},
+ {id:'M6',name:'Multi-Agent & Scale',sprint:'Sprint 9+',goal:'The payoff: new use cases plug into the same foundation.',
+  build:['Specialised sub-agents (researcher, executor, reviewer)','Orchestrator agent coordinates them','Shared memory + shared tool registry across agents','Workflow #2 and #3 = new graph + tools, not new infra'],
+  stack:['Orchestrator agent','Shared tool registry','Shared memory','Reusable graphs'],
+  gate:'A second workflow ships without touching the platform layers.',
+  risk:'Scaling agents before governance is solid — small errors multiply fast.'},
+];
+
+// render stack
+stack.innerHTML=layers.map(l=>`
+ <div>
+  <div class="layer" data-top="${l.top?1:0}" onclick="tog(${l.n})">
+    <span class="num">${l.n}</span>
+    <span><span class="lt">${l.title}</span><div class="ld">${l.desc}</div></span>
+    <span class="plus">+</span>
+  </div>
+  <div class="detail" id="d${l.n}"><div class="in">
+    <p>${l.p}</p><div class="chips">${l.tech.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+  </div></div>
+ </div>`).join('');
+
+function tog(n){
+  const d=document.getElementById('d'+n), lay=d.previousElementSibling;
+  const open=d.classList.contains('open');
+  document.querySelectorAll('.detail').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.layer').forEach(x=>x.classList.remove('open'));
+  if(!open){d.classList.add('open');lay.classList.add('open');}
+}
+
+// render roadmap
+rail.innerHTML=phases.map((p,i)=>`
+ <div class="step ${i===0?'active':''}" onclick="pick(${i})">
+   <div class="id">${p.id}</div><div class="sp">${p.sprint}</div><div class="nm">${p.name}</div>
+ </div>`).join('');
+
+function pick(i){
+  document.querySelectorAll('.step').forEach((s,j)=>s.classList.toggle('active',j===i));
+  const p=phases[i];
+  card.innerHTML=`
+   <h3>${p.id} · ${p.name}</h3><div class="goal">${p.goal}</div>
+   <div class="grid2">
+     <div class="block"><h4>What you build</h4><ul>${p.build.map(b=>`<li>${b}</li>`).join('')}</ul></div>
+     <div class="block"><h4>Stack</h4><div class="chips">${p.stack.map(s=>`<span class="chip">${s}</span>`).join('')}</div>
+       <div class="gate"><b>✓ Exit gate</b><p>${p.gate}</p></div>
+       <div class="risk"><b>⚠ Risk if skipped</b><p>${p.risk}</p></div>
+     </div>
+   </div>`;
+}
+pick(0);
+
+function setView(v){
+  document.getElementById('vArch').classList.toggle('active',v==='arch');
+  document.getElementById('vBuild').classList.toggle('active',v==='build');
+  document.getElementById('tArch').classList.toggle('active',v==='arch');
+  document.getElementById('tBuild').classList.toggle('active',v==='build');
+}
+</script>
+</body>
+</html>
