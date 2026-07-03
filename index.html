@@ -83,6 +83,24 @@
   .hitl{text-align:center;color:var(--muted);font-size:13px;margin-top:6px}
   .foot{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
   .rule{margin-top:26px;text-align:center;font-family:'Poppins';font-weight:600;font-size:17px;color:var(--gold)}
+  /* flow diagram */
+  .flowscroll{overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  #flowSvg{display:block;min-width:860px;width:100%;height:auto}
+  #flowSvg .col{cursor:pointer}
+  #flowSvg .colhi{opacity:0;transition:opacity .18s}
+  #flowSvg .col:hover .colhi,#flowSvg .col.sel .colhi{opacity:1}
+  #flowSvg .fnode{transition:.18s}
+  #flowSvg .col:hover .fnode,#flowSvg .col.sel .fnode{stroke:var(--glow);stroke-width:2}
+  #flowSvg text{font-family:'Inter Tight',sans-serif}
+  #flowSvg .fid{font-family:'Poppins',sans-serif;font-weight:700}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:16px 0 4px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+  .flowcard{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin-top:20px;min-height:120px}
+  .flowcard h3{font-size:20px;color:var(--lav);margin-bottom:2px}
+  .flowcard .goal{color:var(--muted);font-size:14.5px;margin-bottom:14px}
+  .flowcard .frow{display:flex;gap:22px;flex-wrap:wrap}
+  .flowcard .fcol{flex:1;min-width:220px}
 </style>
 </head>
 <body>
@@ -97,6 +115,7 @@
 
   <div class="toggle">
     <button id="tArch" class="active" onclick="setView('arch')">Architecture</button>
+    <button id="tFlow" onclick="setView('flow')">Roadmap Flow</button>
     <button id="tBuild" onclick="setView('build')">Build order</button>
   </div>
 
@@ -110,6 +129,19 @@
       <div class="node pulse">OBSERVE</div><span class="arrow">↺</span>
     </div>
     <p class="hitl">The control loop — with a human-in-the-loop checkpoint before any risky action, and a hard stop so it never loops forever.</p>
+  </section>
+
+  <!-- ROADMAP FLOW -->
+  <section id="vFlow" class="view">
+    <div class="legend">
+      <span><i style="background:#FFBA00"></i>Build first (foundation)</span>
+      <span><i style="background:rgba(173,131,250,.35);border:1px dashed #AD83FA"></i>Thin vertical slice</span>
+      <span><i style="background:#7c4dd6"></i>Thicken this layer</span>
+      <span><i style="background:rgba(62,207,142,.35);border:1px solid #3ecf8e"></i>Reuse &amp; scale</span>
+    </div>
+    <div class="flowscroll"><svg id="flowSvg"></svg></div>
+    <div class="flowcard" id="flowCard"></div>
+    <p class="hint">Left→right is the build sequence, gated. Top→bottom are the six layers. One thin slice up the spine at M1, then each phase thickens a layer — until M6 reuses the whole stack. Click a phase.</p>
   </section>
 
   <!-- BUILD ORDER -->
@@ -227,11 +259,108 @@ function pick(i){
 }
 pick(0);
 
+// ---- roadmap flow diagram (swimlane) ----
+// rows top->bottom mirror the stack: Governance(6) at top ... Data(1) at bottom
+const rowOrder=[5,4,3,2,1,0];
+// which layers each phase touches, and how
+const activity={
+  0:{5:'first'},
+  1:{0:'slice',1:'slice',2:'slice',3:'slice',4:'slice',5:'slice'},
+  2:{0:'thick',1:'thick'},
+  3:{2:'thick',3:'thick'},
+  4:{4:'thick'},
+  5:{5:'thick'},
+  6:{0:'scale',1:'scale',2:'scale',3:'scale',4:'scale',5:'scale'},
+};
+const fill={first:'#FFBA00',slice:'rgba(173,131,250,.20)',thick:'#7c4dd6',scale:'rgba(62,207,142,.20)'};
+const stroke={first:'#FFBA00',slice:'#AD83FA',thick:'#BD74FF',scale:'#3ecf8e'};
+const tag={first:'BUILD 1ST',slice:'slice',thick:'THICKEN',scale:'reuse'};
+const tagFill={first:'#3a2600',slice:'#efe6ff',thick:'#fff',scale:'#d6f5e6'};
+
+function renderFlow(){
+  const gut=136, colW=104, nodeH=64, nodeY=6, gridTop=104, rowH=56, n=phases.length, rows=rowOrder.length;
+  const W=gut+n*colW, H=gridTop+rows*rowH+8;
+  const svg=document.getElementById('flowSvg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  let s='';
+  // subtle grid backdrop
+  // spine highlight for M1 (index 1) — the vertical slice
+  const spineX=gut+1*colW;
+  s+=`<rect x="${spineX+2}" y="${nodeY}" width="${colW-4}" height="${H-nodeY-4}" rx="12" fill="#AD83FA" opacity="0.06"/>`;
+  s+=`<text x="${spineX+colW/2}" y="${H-4}" text-anchor="middle" font-size="10" fill="#AD83FA" opacity="0.8">the spine</text>`;
+  // row labels
+  rowOrder.forEach((li,r)=>{
+    const y=gridTop+r*rowH+rowH/2;
+    const isGov=li===5;
+    s+=`<text x="${gut-12}" y="${y-4}" text-anchor="end" font-size="12.5" font-weight="600" fill="${isGov?'#FFBA00':'#e7defc'}">${layers[li].title.split(' ')[0]}</text>`;
+    s+=`<text x="${gut-12}" y="${y+11}" text-anchor="end" font-size="10" fill="#9d94c9">Layer ${li+1}</text>`;
+    s+=`<line x1="${gut-4}" y1="${gridTop+r*rowH}" x2="${W-4}" y2="${gridTop+r*rowH}" stroke="rgba(173,131,250,.12)"/>`;
+  });
+  s+=`<line x1="${gut-4}" y1="${gridTop+rows*rowH}" x2="${W-4}" y2="${gridTop+rows*rowH}" stroke="rgba(173,131,250,.12)"/>`;
+  // flow arrows + gate diamonds between nodes
+  for(let i=0;i<n-1;i++){
+    const x1=gut+i*colW+colW-8, x2=gut+(i+1)*colW+8, my=nodeY+nodeH/2, mx=(x1+x2)/2;
+    s+=`<line x1="${x1}" y1="${my}" x2="${x2}" y2="${my}" stroke="#AD83FA" stroke-width="2" marker-end="url(#ah)"/>`;
+    s+=`<g><rect x="${mx-6}" y="${my-6}" width="12" height="12" transform="rotate(45 ${mx} ${my})" fill="#20124D" stroke="#6ef0b0" stroke-width="1.5"/><title>Exit gate: ${phases[i].gate}</title></g>`;
+  }
+  // columns: node header + cells, wrapped in interactive group
+  phases.forEach((p,i)=>{
+    const cx=gut+i*colW;
+    s+=`<g class="col" data-i="${i}" onclick="pickFlow(${i})">`;
+    s+=`<rect class="colhi" x="${cx+2}" y="${nodeY}" width="${colW-4}" height="${H-nodeY-4}" rx="12" fill="#BD74FF" opacity="0"/>`;
+    // node
+    const nx=cx+6, nw=colW-12;
+    s+=`<rect class="fnode" x="${nx}" y="${nodeY}" width="${nw}" height="${nodeH}" rx="11" fill="url(#ng)" stroke="rgba(173,131,250,.4)"/>`;
+    s+=`<text class="fid" x="${cx+colW/2}" y="${nodeY+24}" text-anchor="middle" font-size="17" fill="#fff">${p.id}</text>`;
+    s+=`<text x="${cx+colW/2}" y="${nodeY+40}" text-anchor="middle" font-size="8.5" fill="#c9c2e8">${p.sprint.toUpperCase()}</text>`;
+    // wrap name to two short lines
+    const words=p.name.split(' ');const mid=Math.ceil(words.length/2);
+    s+=`<text x="${cx+colW/2}" y="${nodeY+52}" text-anchor="middle" font-size="8.5" fill="#efe9ff">${words.slice(0,mid).join(' ')}</text>`;
+    s+=`<text x="${cx+colW/2}" y="${nodeY+61}" text-anchor="middle" font-size="8.5" fill="#efe9ff">${words.slice(mid).join(' ')}</text>`;
+    // cells
+    rowOrder.forEach((li,r)=>{
+      const a=activity[i][li];
+      const y=gridTop+r*rowH+6, cw=colW-14, ch=rowH-12, xx=cx+7;
+      if(a){
+        const dash=(a==='slice')?' stroke-dasharray="4 3"':'';
+        s+=`<rect x="${xx}" y="${y}" width="${cw}" height="${ch}" rx="8" fill="${fill[a]}" stroke="${stroke[a]}" stroke-width="1.5"${dash}/>`;
+        s+=`<text x="${cx+colW/2}" y="${y+ch/2+3}" text-anchor="middle" font-size="9" font-weight="700" fill="${tagFill[a]}">${tag[a]}</text>`;
+      }else{
+        s+=`<rect x="${xx}" y="${y}" width="${cw}" height="${ch}" rx="8" fill="rgba(255,255,255,.02)" stroke="rgba(173,131,250,.08)"/>`;
+      }
+    });
+    s+=`</g>`;
+  });
+  // defs
+  s=`<defs>
+      <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#AD83FA"/></marker>
+      <linearGradient id="ng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#33207A"/><stop offset="1" stop-color="#2A1A63"/></linearGradient>
+    </defs>`+s;
+  svg.innerHTML=s;
+  pickFlow(0);
+}
+function pickFlow(i){
+  document.querySelectorAll('#flowSvg .col').forEach(g=>g.classList.toggle('sel',+g.dataset.i===i));
+  const p=phases[i];
+  const touched=Object.keys(activity[i]).map(li=>layers[li].title.split(' ')[0]);
+  document.getElementById('flowCard').innerHTML=`
+    <h3>${p.id} · ${p.name} <span style="font-size:12px;color:#9d94c9;font-weight:400">— ${p.sprint}</span></h3>
+    <div class="goal">${p.goal}</div>
+    <div class="frow">
+      <div class="fcol"><div class="block"><h4>Layers touched</h4><div class="chips">${touched.map(t=>`<span class="chip">${t}</span>`).join('')}</div></div>
+        <div class="gate" style="margin-top:14px"><b>✓ Exit gate</b><p>${p.gate}</p></div></div>
+      <div class="fcol"><div class="block"><h4>Stack</h4><div class="chips">${p.stack.map(t=>`<span class="chip">${t}</span>`).join('')}</div></div>
+        <div class="risk"><b>⚠ Risk if skipped</b><p>${p.risk}</p></div></div>
+    </div>`;
+}
+renderFlow();
+
+const VIEWS=['arch','flow','build'], BTN={arch:'tArch',flow:'tFlow',build:'tBuild'}, SEC={arch:'vArch',flow:'vFlow',build:'vBuild'};
 function setView(v){
-  document.getElementById('vArch').classList.toggle('active',v==='arch');
-  document.getElementById('vBuild').classList.toggle('active',v==='build');
-  document.getElementById('tArch').classList.toggle('active',v==='arch');
-  document.getElementById('tBuild').classList.toggle('active',v==='build');
+  VIEWS.forEach(x=>{
+    document.getElementById(SEC[x]).classList.toggle('active',x===v);
+    document.getElementById(BTN[x]).classList.toggle('active',x===v);
+  });
 }
 </script>
 </body>
